@@ -7,9 +7,10 @@ kubectl --help
 ```
 - 查看pod或者deployment信息
 ```
-// 获取 部署配置列表
+<!-- 获取 部署配置列表 -->
 kubectl get deployment -n 命名空间
-// 获取pod列表
+
+<!-- 获取pod列表 -->
 kubectl get pod -n 命名空间
 ```
 - 删除pod
@@ -53,6 +54,25 @@ kubectl describe <资源> <主机名称>
 // 查看 ali-zb-dsers-acktest-sys-10.16.21.239 这个node的信息
 kubectl describe node ali-zb-dsers-acktest-sys-10.16.21.239
 ```
+
+- 日志查询方法
+```
+<!-- 查看日志 -->
+kubectl logs pod_name -n name_space
+<!-- 实时打印 -->
+kubectl logs -f pod_name -n name_space
+<!-- pod含有多个容器 -->
+kubectl logs pod_name -c nginx
+<!-- 使用标签 -->
+kubectl logs  -l k8s-app=kube-dns -n kube-system
+<!-- 追加到文件中 -->
+kubectl logs calico-node-frr2c -n kube-system | grep ERROR > /root/2.txt
+<!-- 查看最新 n 行 -->
+kubectl logs --tail=200 -n dsers-test open-app-banner-consumer-v1-6db7fddb56-qmwtk
+<!-- 查看最新两小时的 -->
+kubectl logs --since=2h  -n dsers-test open-app-banner-consumer-v1-6db7fddb56-qmwtk
+```
+
 - 常用命令
 <div class="table-box">
     <table align="center">
