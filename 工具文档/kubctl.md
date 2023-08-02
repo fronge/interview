@@ -18,11 +18,24 @@ kubectl get pod -n 命名空间
 ```
 kubectl delete pod <pod名> -n <命名空间>
 ```
-
+- 在线修改配置
+```
+ kubectl edit deployment/<deployment名> -o yaml --save-config -n namespace
+```
 - 删除deployment
   - 会将 deployment 与 pod 全都删除
 ```
 kubectl delete deployment <deployment名> -n <命名空间>
+```
+
+- 获取详细配置信息
+```
+kubectl get deployment dsers-notify-consumer-v1 -o yaml -n dsers-test
+```
+
+- 应用配置
+```
+kubectl apply -f components.yaml
 ```
 
 - 查看node 信息
