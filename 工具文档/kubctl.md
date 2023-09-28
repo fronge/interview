@@ -264,3 +264,14 @@ kubectl logs --since=2h  -n dsers-test open-app-banner-consumer-v1-6db7fddb56-qm
         </tbody>
     </table>
 </div>
+
+
+- 常用操作
+
+```
+<!-- 修改pod数 -->
+kubectl scale deployment my-deployment --replicas=3
+<!-- 重启pods -->
+kubectl rollout restart deployment <deployment_name> -n <namespace>
+
+```
