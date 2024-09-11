@@ -72,3 +72,40 @@ SUBSCRIBE __sentinel__:hello
 
 ### 创建连向其他Sentinel的命令连接
 - 监视同一个主服务器的多个Sentinel可以自动发现对方
+### 检测主观下线状态
+- Sentinel会以每秒一次的频率向所有与它创建了命令连接的实例（包括主服务器、从服务器、其他Sentinel在内）发送PING命令，并通过实例返回的PING命令回复来判断实例是否在线
+- Sentinel配置文件中的down-after-milliseconds选项指定了Sentinel判断实例进入主观下线所需的时间长度
+  - 不仅会被Sentinel用来判断主服务器的主观下线状态，还会被用于判断主服务器属下的所有从服务器，以及所有同样监视这个主服务器的其他Sentinel的主观下线状态
+### 检查客观下线状态
+- 当Sentinel将一个主服务器判断为主观下线之后，为了确认这个主服务器是否真的下线了，它会向同样监视这一主服务器的其他Sentinel进行询问，看它们是否也认为主服务器已经进入了下线状态（可以是主观下线或者客观下线）​。当Sentinel从其他Sentinel那里接收到足够数量的已下线判断之后，Sentinel就会将从服务器判定为客观下线，并对主服务器执行故障转移操作
+#### 发送SENTINEL is-master-down-by-addr命令
+#### 接收SENTINEL is-master-down-by-addr命令
+#### 接收SENTINEL is-master-down-by-addr命令的回复
+
+### 选举领头Sentinel
+- 当一个主服务器被判断为客观下线时，监视这个下线主服务器的各个Sentinel会选举出一个领头Sentinel，并由领头Sentinel对下线主服务器执行故障转移操作
+#### 选举规则和方法
+- 所有在线的Sentinel都有被选为领头Sentinel的资格
+- 每次进行领头Sentinel选举之后，不论选举是否成功，所有Sentinel的配置纪元（configuration epoch）的值都会自增一次
+- 在一个配置纪元里面，所有Sentinel都有一次将某个Sentinel设置为局部领头Sentinel的机会，并且局部领头一旦设置，在这个配置纪元里面就不能再更改
+- 每个发现主服务器进入客观下线的Sentinel都会要求其他Sentinel将自己设置为局部领头Sentine
+- 当一个Sentinel（源Sentinel）向另一个Sentinel（目标Sentinel）发送SENTINEL is-master-down-by-addr命令，并且命令中的runid参数不是*符号而是源Sentinel的运行ID时，这表示源Sentinel要求目标Sentinel将前者设置为后者的局部领头Sentinel
+- Sentinel设置局部领头Sentinel的规则是先到先得
+- 目标Sentinel在接收到SENTINEL is-master-down-by-addr命令之后，将向源Sentinel返回一条命令回复，回复中的leader_runid参数和leader_epoch参数分别记录了目标Sentinel的局部领头Sentinel的运行ID和配置纪元
+- 源Sentinel在接收到目标Sentinel返回的命令回复之后，会检查回复中leader_epoch参数的值和自己的配置纪元是否相同
+- 如果有某个Sentinel被半数以上的Sentinel设置成了局部领头Sentinel，那么这个Sentinel成为领头Sentinel
+- 因为领头Sentinel的产生需要半数以上Sentinel的支持，并且每个Sentinel在每个配置纪元里面只能设置一次局部领头Sentinel，所以在一个配置纪元里面，只会出现一个领头Sentinel
+- 如果在给定时限内，没有一个Sentinel被选举为领头Sentinel，那么各个Sentinel将在一段时间之后再次进行选举，直到选出领头Sentinel为止
+### 故障转移
+#### 步骤
+- 在已下线主服务器属下的所有从服务器里面，挑选出一个从服务器，并将其转换为主服务器
+  - 规则
+    - 删除列表中所有处于下线或者断线状态的从服务器
+    - 删除列表中所有最近五秒内没有回复过领头Sentinel的INFO命令的从服务器
+    - 删除所有与已下线主服务器连接断开超过down-after-milliseconds*10毫秒的从服务器
+    - 领头Sentinel将根据从服务器的优先级，对列表中剩余的从服务器进行排序，并选出其中优先级最高的从服务器
+      - 从服务器的复制偏移量
+      - 运行ID最小的从服务器
+- 修改从服务器复制目标
+  - 让已下线主服务器属下的所有从服务器改为复制新的主服务器
+- 将已下线主服务器设置为新的主服务器的从服务器
