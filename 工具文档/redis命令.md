@@ -4,61 +4,119 @@
 ping
 ```
 
-- 选择数据库
+选择数据库
 ```
 <!-- SELECT db_index -->
 SELECT 1
 ```
-- 查看数据库信息
+查看数据库信息
 ```
 info
 ```
 
-- 查看当前选择的数据库使用大小
+查看当前选择的数据库使用大小
 ```
 <!-- DBSIZE -->
 DBSIZE
 ```
 
-- 检查数据库中的 key 是否存在
-```
-EXISTS key_name
-```
-
-- 清空数据库
+清空数据库
   - 慎用
 ```
 flushdb
 ```
-- 清空所有数据库
+清空所有数据库
   - 慎用
 ```
 flashall
 ```
 
-- 退出连接
+退出连接
 ```
 quit 或者 exit
 ```
 
-- 查看所有key
-  - 慎用
+## key 操作
+删除key
 ```
-keys *
+DEL key1 [key2 .. key_N]
+```
+查看key类型
+```
+TYPE key
 ```
 
-- 设置过期时间
+
+序列化给定 key ，并返回被序列化的值
 ```
-expire key seconds
+DUMP key
 ```
-- 查看过期时间
+
+检查给定 key 是否存在
 ```
-ttl key
+EXISTS key
 ```
-- 移除过期时间
+
+为给定 key 设置过期时间
 ```
-persist key
+EXPIRE key seconds
 ```
+
+用于为 key 设置过期时间，接受的时间参数是 UNIX 时间戳
+```
+EXPIREAT key timestamp-seconds
+```
+
+设置 key 的过期时间，以毫秒计
+```
+PEXPIRE key ttl-milliseconds
+```
+
+设置 key 过期时间的时间戳(unix timestamp)，以毫秒计
+```
+PEXPIREAT key timestamp-ms
+```
+
+查找所有符合给定模式的 key
+  - patern 支持 * ? [a-z]
+```
+KEYS patern
+```
+将当前数据库的 key 移动到给定的数据库中
+ ```
+MOVE key db
+```
+
+移除 key 的过期时间，key 将持久保持
+```
+PERSIST key
+```
+
+以毫秒为单位返回 key 的剩余的过期时间
+```
+PTTL key
+```
+
+以秒为单位，返回给定 key 的剩余生存时间
+```
+TTL key
+```
+
+从当前数据库中随机返回一个 key
+```
+RANDOMKEY
+```
+
+修改 key 的名称
+```
+RENAME key newkey
+```
+
+仅当 newkey 不存在时，将 key 改名为 newkey
+```
+RENAMENX key newkey
+```
+
 
 
 # 字符串
@@ -106,7 +164,7 @@ INCRBY age -2
 DECR
 ```
 
-- 浮点数资自增指定步长
+- 浮点数自增指定步长
   - 必须指定步长
 ```
 <!-- INCRBYFLOAT key increment -->
